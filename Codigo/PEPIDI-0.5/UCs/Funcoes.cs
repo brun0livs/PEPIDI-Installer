@@ -1,0 +1,225 @@
+﻿using PEPIDI.FormsSecundarios;
+using PEPIDI.Models;
+using PEPIDI.Organizers;
+using PEPIDI.Utils;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace PEPIDI.UCs
+{
+    /// <summary>
+    /// UC de gestão de funções (cargos) e respetivas permissões.
+    /// A grelha carrega todas as funções; utilizadores com NivelAcesso > 1 veem a grelha
+    /// em modo só-leitura sem poder adicionar. NivelAcesso=0 (super-admin) vê tudo,
+    /// incluindo funções com NivelAcesso=0 — filtradas para os restantes.
+    /// As checkboxes de permissão na grelha auto-gravam via sp_AtualizarPermissoesFuncao
+    /// quando o utilizador as altera — não há botão "Guardar" separado.
+    /// </summary>
+    public partial class Funcoes : UserControl
+    {
+        private int IDGestor;
+        string funcao;
+        public Funcoes(int _IDGestor, string _funcao)
+        {
+            InitializeComponent();
+            IDGestor = _IDGestor;
+            funcao = _funcao;
+        }
+
+        private void Funcoes_Load(object sender, EventArgs e)
+        {
+            CarregarDGV(dgvFuncoes, funcao);
+            TouchScrollHelper.AtivarScrollPorArrasto(dgvFuncoes);
+            GestorTema.AplicarEstilos(this);
+
+            if (Sessao.NivelAcessoAtual > 1)
+            {
+                btnAddFuncao.Visible = false; // Ajusta para os nomes dos teus botões
+
+                // Opcional: Bloquear a grelha para ser só de leitura
+                dgvFuncoes.ReadOnly = true;
+            }
+        }
+
+
+        private DataTable CarregarDGV(PEPIDIDataGridView dgv, string Funcao)
+        {
+            dgv.AutoGenerateColumns = false;
+
+            string query = @"SELECT [ID], [Nome], [PodeVerStock], [PodeInserirStock], [PodeCriarStock],
+                                    [PodeVerHistorico], [PodeEditarFunc], [PodeSubmeter], [PodeAprovar], [PodeEntregar],
+                                    [PodeCriarFuncoes], [PodeAlterarDefinicoes], [PodeVerUsados],
+                                    [CorHex] FROM Funcoes";
+
+            DataTable dt = new DataTable();
+
+            // Se quem está a ver a grelha NÃO for o Super Admin (0)...
+            if (Sessao.NivelAcessoAtual > 0)
+            {
+                // ... adicionamos um filtro para esconder as funções de Nível 0!
+                query += " WHERE NivelAcesso > 0";
+            }
+
+            using (SqlConnection conn = new SqlConnection(GetConn.ConnectionString))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    da.Fill(dt);
+                }
+            }
+            dgv.DataSource = dt;
+
+            // --- ACTIVAR BADGES COLORIDAS ---
+            // Isto diz à tua classe personalizada para procurar a coluna com HeaderText "Função"
+            if (Funcao == "Programador")
+            {
+                dgv.Columns["ID"].Visible = true;
+            }else 
+            {
+                dgv.Columns["ID"].Visible = false;
+            }
+            dgv.BadgeColumnName = "Nome";
+            dgv.BadgeColorColumnName = "CorHex";
+            dgv.Columns["CorHex"].Visible = false; // Esconder a coluna que tem o código da cor, já que a cor vai ser mostrada no badge  
+            dgv.Columns["Nome"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+            return dt;
+        }
+
+        private void dgvFuncoes_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (dgvFuncoes.IsCurrentCellDirty)
+                dgvFuncoes.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        }
+
+        private void dgvFuncoes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            string colName = dgvFuncoes.Columns[e.ColumnIndex].Name;
+
+            if (colName == "Nome" || colName == "ID") return;
+
+            var row = dgvFuncoes.Rows[e.RowIndex];
+            int id = Convert.ToInt32(row.Cells["ID"].Value);
+
+            GuardarPermissoesFuncao(id, row);
+        }
+
+
+        private void GuardarPermissoesFuncao(int idFuncao, DataGridViewRow row)
+        {
+            using (SqlConnection conn = new SqlConnection(GetConn.ConnectionString))
+            using (SqlCommand cmd = new SqlCommand("sp_AtualizarPermissoesFuncao", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@ID", idFuncao);
+                cmd.Parameters.AddWithValue("@PodeVerStock", row.Cells["PodeVerStock"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeInserirStock", row.Cells["PodeInserirStock"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeCriarStock", row.Cells["PodeCriarStock"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeVerHistorico", row.Cells["PodeVerHistorico"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeEditarFunc", row.Cells["PodeEditarFunc"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeSubmeter", row.Cells["PodeSubmeter"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeAprovar", row.Cells["PodeAprovar"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeEntregar", row.Cells["PodeEntregar"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeCriarFuncoes", row.Cells["PodeCriarFuncoes"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeAlterarDefinicoes", row.Cells["PodeAlterarDefinicoes"].Value ?? false);
+                cmd.Parameters.AddWithValue("@PodeVerUsados", row.Cells["PodeVerUsados"].Value ?? false);
+
+                cmd.Parameters.AddWithValue("@AlteradoPor", IDGestor);
+
+                conn.Open();
+                int linhas = cmd.ExecuteNonQuery();
+                System.Diagnostics.Debug.WriteLine($"[SP] Linhas afetadas: {linhas}");
+            }
+        }
+
+        private void btnAddFuncao_Click(object sender, EventArgs e)
+        {
+            using (Form overlay = new Form())
+            {
+                // Configurar o formulário "sombra"
+                overlay.StartPosition = FormStartPosition.CenterScreen;
+                overlay.WindowState = FormWindowState.Maximized;
+                overlay.FormBorderStyle = FormBorderStyle.None; // Sem bordas
+                overlay.Opacity = 0.50d;                        // 50% transparente
+                overlay.BackColor = Color.Black;                // Cor preta
+                overlay.ShowInTaskbar = false;                  // Não aparece na barra de tarefas
+
+                // Faz o overlay cobrir exatamente o formulário atual (this)
+                overlay.Location = this.Location;
+                overlay.Size = this.Size;
+
+                // Mostra a sombra
+                overlay.Show(this);
+                using (FormFuncao frm = new FormFuncao("", 0, IDGestor, ""))
+                {
+                    if (frm.ShowDialog() == DialogResult.OK)
+                    {
+                        CarregarDGV(dgvFuncoes, funcao);
+                    }
+                }
+            }
+        }
+
+        private void dgvFuncoes_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // 1. Verificações básicas
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            // 2. Obter os dados (Usei nomes seguros, ajusta se as tuas colunas tiverem nomes diferentes)
+            // Nota: Certifica-te que as colunas na DataGridView se chamam mesmo "Nome", "ID" e "CorHex"
+            string textofuncao = dgvFuncoes.Rows[e.RowIndex].Cells["Nome"].Value.ToString();
+            int idfuncao = Convert.ToInt32(dgvFuncoes.Rows[e.RowIndex].Cells["ID"].Value);
+
+            var cellHex = dgvFuncoes.Rows[e.RowIndex].Cells["CorHex"].Value;
+            string hex = cellHex != null ? cellHex.ToString() : "";
+
+            // =================================================================
+            // 3. EFEITO DE ESCURECER O FUNDO (OVERLAY)
+            // =================================================================
+            using (Form overlay = new Form())
+            {
+                // Configurar o formulário "sombra"
+                overlay.StartPosition = FormStartPosition.CenterScreen;
+                overlay.WindowState = FormWindowState.Maximized;
+                overlay.FormBorderStyle = FormBorderStyle.None; // Sem bordas
+                overlay.Opacity = 0.50d;                        // 50% transparente
+                overlay.BackColor = Color.Black;                // Cor preta
+                overlay.ShowInTaskbar = false;                  // Não aparece na barra de tarefas
+
+                // Faz o overlay cobrir exatamente o formulário atual (this)
+                overlay.Location = this.Location;
+                overlay.Size = this.Size;
+
+                // Mostra a sombra
+                overlay.Show(this);
+
+                // 4. Abrir o FormFuncao
+                // Passamos o 'overlay' como dono (owner) para garantir que o FormFuncao fica por cima da sombra
+                using (FormFuncao frm = new FormFuncao(textofuncao, idfuncao, IDGestor, hex))
+                {
+                    frm.StartPosition = FormStartPosition.CenterParent; // Centraliza na sombra
+
+                    if (frm.ShowDialog(overlay) == DialogResult.OK)
+                    {
+                        CarregarDGV(dgvFuncoes, funcao);
+                    }
+                }
+
+                // Quando o using acabar, o overlay fecha-se sozinho
+            }
+        }
+    }
+}

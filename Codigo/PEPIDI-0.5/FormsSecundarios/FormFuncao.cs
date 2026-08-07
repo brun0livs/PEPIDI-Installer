@@ -1,0 +1,90 @@
+﻿using Microsoft.Data.SqlClient;
+using PEPIDI.Organizers;
+using PEPIDI.Utils;
+using System.Data;
+
+namespace PEPIDI.FormsSecundarios
+{
+    /// <summary>
+    /// Formulário para criar ou editar uma função (cargo). Permite definir o nome
+    /// e a cor associada (em formato hex #RRGGBB). A cor é escolhida via ColorDialog
+    /// e convertada para hex antes de ser gravada. Invoca sp_InserirFuncao.
+    /// Fecha ao premir Escape (ESC configurado no Designer como CancelButton).
+    /// </summary>
+    public partial class FormFuncao : Form
+    {
+        private readonly int id;
+        private readonly string Nome;
+        private readonly int idGestor;
+        private readonly string Hex;
+        EfeitoUI M = new EfeitoUI();
+
+
+        public FormFuncao(string _Nome, int _id, int _idgestor, string _Hex)
+        {
+            id = _id;
+            Nome = _Nome;
+            idGestor = _idgestor;
+            Hex = _Hex;
+            InitializeComponent();
+            txtNome.Text = Nome.ToString();
+            txtCorHex.Text = Hex.ToString();
+
+        }
+
+        private void LblFechar_Click(object sender, EventArgs e)
+        {
+            this.Close();
+            GestorTema.AplicarEstilos(this);
+        }
+
+        private void EscolherCor_Click(object sender, EventArgs e)
+        {
+            using (ColorDialog colorDialog = new ColorDialog())
+            {
+                if (colorDialog.ShowDialog() == DialogResult.OK)
+                {
+                    var Cor = colorDialog.Color;
+                    string hex = $"#{Cor.R:X2}{Cor.G:X2}{Cor.B:X2}";
+                    txtCorHex.Text = hex;
+                }
+            }
+        }
+
+        private void Guardar_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(GetConn.ConnectionString))
+            using (SqlCommand cmd = new SqlCommand("sp_InserirFuncao", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                if (id != 0) cmd.Parameters.AddWithValue("@ID", id);
+                cmd.Parameters.Add("@Nome", SqlDbType.NVarChar, 100).Value = txtNome.Text;
+                cmd.Parameters.Add("@CriadoPor", SqlDbType.Int).Value = idGestor;
+                cmd.Parameters.Add("@CorHex", SqlDbType.NVarChar, 7).Value = txtCorHex.Text;
+
+                conn.Open();
+                try
+                {
+                    object result = cmd.ExecuteScalar();
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }catch (Exception ex){
+                    M.AbrirMensagem("Algo correu mal:\n" + ex.ToString(),"Erro");
+                }
+            }
+        }
+
+        private void FormFuncao_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Escape)
+            {
+                this.Close();
+            }
+        }
+
+        private void FormFuncao_Load(object sender, EventArgs e)
+        {
+            this.KeyPreview = true;
+        }
+    }
+}

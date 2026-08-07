@@ -1,0 +1,115 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
+    <RootNamespace>PEPIDI</RootNamespace>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>PEPIDI</AssemblyName>
+    <Version>0.5</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<ServerGarbageCollection>true</ServerGarbageCollection>
+	<RetainVMGarbageCollection>true</RetainVMGarbageCollection>
+	<TieredCompilation>true</TieredCompilation>
+	<TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+
+	<PublishReadyToRun>true</PublishReadyToRun>
+
+	<ApplicationIcon>logo.ico</ApplicationIcon>   
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="RelatorioConsumos.xlsx" />
+    <None Remove="Resources\box_add_50dp_000000_FILL0_wght400_GRAD0_opsz48.png" />
+    <None Remove="Resources\box_edit_50dp_000000_FILL0_wght400_GRAD0_opsz48.png" />
+    <None Remove="Resources\Close.png" />
+    <None Remove="Resources\Criar_Black.png" />
+    <None Remove="Resources\Defs_Black.png" />
+    <None Remove="Resources\DTlogo.png" />
+    <None Remove="Resources\Expandir.png" />
+    <None Remove="Resources\eye_off.png" />
+    <None Remove="Resources\eye_on.png" />
+    <None Remove="Resources\Funcionarios_Black.png" />
+    <None Remove="Resources\Funcoes_Black.png" />
+    <None Remove="Resources\Insert_Black.png" />
+    <None Remove="Resources\logo.png" />
+    <None Remove="Resources\Lupa.png" />
+    <None Remove="Resources\PedApro_Black.png" />
+    <None Remove="Resources\PedPen_Black.png" />
+    <None Remove="Resources\Pendentes.png" />
+    <None Remove="Resources\Perfil Funcionário-03.png" />
+    <None Remove="Resources\Sair_Black.png" />
+    <None Remove="Resources\Stock_Black.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="logo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Guna.Charts.WinForms" Version="1.1.0" />
+    <PackageReference Include="Guna.UI2.WinForms" Version="2.0.4.7" />
+    <PackageReference Include="itext" Version="9.6.0" />
+    <PackageReference Include="itext.bouncy-castle-fips-adapter" Version="9.6.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="RelatorioConsumos.xlsx" />
+    <Resource Include="Resources\box_add_50dp_000000_FILL0_wght400_GRAD0_opsz48.png" />
+    <Resource Include="Resources\box_edit_50dp_000000_FILL0_wght400_GRAD0_opsz48.png" />
+    <Resource Include="Resources\Close.png" />
+    <Resource Include="Resources\Criar_Black.png" />
+    <Resource Include="Resources\Defs_Black.png" />
+    <Resource Include="Resources\DTlogo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Expandir.png" />
+    <Resource Include="Resources\eye_off.png" />
+    <Resource Include="Resources\eye_on.png" />
+    <Resource Include="Resources\Funcionarios_Black.png" />
+    <Resource Include="Resources\Funcoes_Black.png" />
+    <Resource Include="Resources\Insert_Black.png" />
+    <Resource Include="Resources\logo.png" />
+    <Resource Include="Resources\Lupa.png" />
+    <Resource Include="Resources\PedApro_Black.png" />
+    <Resource Include="Resources\PedPen_Black.png" />
+    <Resource Include="Resources\Pendentes.png" />
+    <Resource Include="Resources\Perfil Funcionário-03.png" />
+    <Resource Include="Resources\Sair_Black.png" />
+    <Resource Include="Resources\Stock_Black.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+</Project>
