@@ -48,7 +48,7 @@ Executar `PEPIDI_0.5_Setup.exe` e seguir o assistente.
 | Campo | Valor |
 |---|---|
 | Nº mecanográfico | `1077` |
-| Password | `teste` |
+| Password | `a` |
 
 > ⚠️ Alterar a password após o primeiro acesso.
 
