@@ -4,7 +4,7 @@
 
 **Pacote de instalação do sistema PEPIDI 0.5**
 
-*Diatosta – Indústria Alimentar, S.A. · Estágio Curricular TeSP PSI · UA-ESTGA · 2026*
+*Diatosta – Indústria Alimentar, S.A. · 2024-2026*
 
 ![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?style=flat-square&logo=dotnet)
 ![SQL Server](https://img.shields.io/badge/DB-SQL%20Server-CC2927?style=flat-square&logo=microsoftsqlserver)
